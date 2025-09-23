@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos Naturales NASA EONET</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <<script type="text/javascript" src="../js/index.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>🌍 Eventos Naturales NASA</h1>
+            
+            <div class="stats">
+                <span class="stats-number" id="eventCount">0</span>
+                <small>Eventos mostrados</small>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">🔍 Filtros de Eventos</div>
+                
+                <label>Categoría:</label>
+                <select id="categoryFilter">
+                    <option value="">Todas las categorías</option>
+                </select>
+                
+                <label>Estado:</label>
+                <select id="statusFilter">
+                    <option value="">Todos</option>
+                    <option value="open">Abiertos/Activos</option>
+                    <option value="closed">Cerrados</option>
+                </select>
+                
+                <label>Últimos días:</label>
+                <select id="daysFilter">
+                    <option value="">Todos los eventos</option>
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30">Últimos 30 días</option>
+                    <option value="90">Últimos 90 días</option>
+                </select>
+                
+                <label>Límite de eventos:</label>
+                <select id="limitFilter">
+                    <option value="50">50 eventos</option>
+                    <option value="100">100 eventos</option>
+                    <option value="200">200 eventos</option>
+                    <option value="">Sin límite</option>
+                </select>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">🗺️ Capas del Mapa</div>
+                <div id="layerControls"></div>
+            </div>
+            
+            <button id="applyFilters">🔄 Aplicar Filtros</button>
+            <button id="clearFilters">🗑️ Limpiar Filtros</button>
+            
+            <div id="loading" class="loading" style="display: none;">
+                ⏳ Cargando datos...
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+</body>
+</html>
