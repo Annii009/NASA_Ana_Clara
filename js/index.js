@@ -431,7 +431,7 @@ class NASAEONETMap {
     showError(message) {
         const errorEl = document.getElementById('errorMessage');
         if (errorEl) {
-            errorEl.innerHTML = `<div class="error-message">⚠️ ${message}</div>`;
+            errorEl.innerHTML = `<div class="error-message"> ${message}</div>`;
             errorEl.style.display = 'block';
         }
     }
