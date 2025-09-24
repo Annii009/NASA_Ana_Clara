@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASITA</title>
+    <link rel="stylesheet" href="../css/sismos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <div class="contenedor">
+        <div class="panel-lateral">
+            <h1><i class="bi bi-geo-alt-fill"></i> Mapa de Sismos en Tiempo Real</h1>
+            
+            <div class="estadisticas">
+                <span class="numero-estadisticas" id="contadorSismos">0</span>
+                <small>Sismos detectados</small>
+            </div>
+
+            <div class="seccion-filtros">
+                <div class="titulo-filtro">Filtros de Sismos</div>
+                
+                <label>Magnitud mínima:</label>
+                <select id="filtroMagnitud">
+                    <option value="1">M1.0+ (Todos)</option>
+                    <option value="2.5">M2.5+ (Leves)</option>
+                    <option value="4.5" selected>M4.5+ (Moderados)</option>
+                    <option value="6">M6.0+ (Fuertes)</option>
+                </select>
+                
+                <label>Período de tiempo:</label>
+                <select id="filtroTiempo">
+                    <option value="hour" selected>Última hora</option>
+                    <option value="day">Últimas 24 horas</option>
+                    <option value="week">Última semana</option>
+                    <option value="month">Último mes</option>
+                </select>
+                
+                <label>Límite de eventos:</label>
+                <select id="filtroLimite">
+                    <option value="50">50 sismos</option>
+                    <option value="100" selected>100 sismos</option>
+                    <option value="200">200 sismos</option>
+                    <option value="500">500 sismos</option>
+                </select>
+
+                <div class="auto-actualizar">
+                    <input type="checkbox" id="autoActualizar" checked>
+                    <label for="autoActualizar">Auto-actualizar cada 5 min</label>
+                </div>
+            </div>
+            
+            <div class="seccion-filtros">
+                <div class="titulo-filtro">Leyenda de Magnitudes</div>
+                <div class="item-leyenda">
+                    <div class="color-leyenda" style="background-color: #2ecc71;"></div>
+                    <span>M1.0 - M2.9 (Muy leve)</span>
+                </div>
+                <div class="item-leyenda">
+                    <div class="color-leyenda" style="background-color: #f1c40f;"></div>
+                    <span>M3.0 - M4.9 (Leve)</span>
+                </div>
+                <div class="item-leyenda">
+                    <div class="color-leyenda" style="background-color: #e67e22;"></div>
+                    <span>M5.0 - M5.9 (Moderado)</span>
+                </div>
+                <div class="item-leyenda">
+                    <div class="color-leyenda" style="background-color: #e74c3c;"></div>
+                    <span>M6.0 - M6.9 (Fuerte)</span>
+                </div>
+                <div class="item-leyenda">
+                    <div class="color-leyenda" style="background-color: #c0392b;"></div>
+                    <span>M7.0+ (Muy fuerte)</span>
+                </div>
+            </div>
+            
+            <button id="btnAplicarFiltros">Aplicar Filtros</button>
+            <button id="btnActualizar" class="secundario">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar Ahora
+            </button>
+            
+            <div id="cargando" class="cargando" style="display: none;">
+                <i class="bi bi-hourglass-split"></i> Cargando datos sísmicos...
+            </div>
+            
+            <div class="ultima-actualizacion" id="ultimaActualizacion">
+                Última actualización: --
+            </div>
+        </div>
+        
+        <div class="contenedor-mapa">
+            <div id="mapa"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="../js/sismos-api.js"></script>
+</body>
+
+</html>
