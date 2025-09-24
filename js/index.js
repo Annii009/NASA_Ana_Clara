@@ -506,16 +506,6 @@ class MapaEventosNASA {
             });
         }
 
-        // Controlar capas del mapa
-        if (controlesCapas) {
-            controlesCapas.addEventListener('change', (e) => {
-                if (e.target.type === 'checkbox') {
-                    const indiceCapa = parseInt(e.target.dataset.capa);
-                    this.alternarCapaNASA(indiceCapa, e.target.checked);
-                }
-            });
-        }
-
         // Permitir aplicar filtros con la tecla Enter
         ['filtroCategoria', 'filtroEstado', 'filtroDias', 'filtroLimite'].forEach(id => {
             const elemento = document.getElementById(id);
@@ -546,44 +536,6 @@ class MapaEventosNASA {
         });
 
         this.cargarEventos();
-    }
-
-    // Activar o desactivar una capa de la NASA
-    alternarCapaNASA(indiceCapa, mostrar) {
-        const informacionCapa = this.capasNASA.get(indiceCapa);
-        if (!informacionCapa) {
-            console.warn('Información de capa no encontrada para índice:', indiceCapa);
-            return;
-        }
-
-        if (mostrar) {
-            try {
-                // Crear capa WMS
-                const capaWMS = L.tileLayer.wms(informacionCapa.serviceUrl, {
-                    layers: informacionCapa.name,
-                    format: 'image/png',
-                    transparent: true,
-                    opacity: 0.7,
-                    attribution: 'NASA',
-                    ...informacionCapa.parameters
-                });
-
-                capaWMS.addTo(this.mapa);
-                this.capasNASA.set(`activa_${indiceCapa}`, capaWMS);
-
-                console.log('Capa NASA agregada:', informacionCapa.name);
-            } catch (error) {
-                console.error('Error agregando capa NASA:', error);
-                this.mostrarError('Error agregando capa del mapa');
-            }
-        } else {
-            const capaActiva = this.capasNASA.get(`activa_${indiceCapa}`);
-            if (capaActiva) {
-                this.mapa.removeLayer(capaActiva);
-                this.capasNASA.delete(`activa_${indiceCapa}`);
-                console.log('Capa NASA removida:', informacionCapa.name);
-            }
-        }
     }
 }
 
