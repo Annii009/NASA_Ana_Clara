@@ -1,80 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eventos Naturales NASA EONET</title>
+    <title>NASITA</title>
     <link rel="stylesheet" href="../css/style.css">
     <script type="text/javascript" src="../js/index.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
+
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h1> Eventos Naturales NASA</h1>
-            
-            <div class="stats">
-                <span class="stats-number" id="eventCount">0</span>
+    <div class="contenedor-principal">
+        <div class="panel-lateral">
+            <h1>Eventos Naturales NASA</h1>
+
+            <div class="estadisticas">
+                <span class="numero-estadisticas" id="contadorEventos">0</span>
                 <small>Eventos mostrados</small>
             </div>
-            <div class="weather-section">
-                <button id="openWeatherPage" class="weather-button">
+
+            <div class="seccion-sismo">
+                <button id="botonAbrirSismo" class="boton-sismo">
                     <i class="bi bi-cloud-sun"></i>
-                    Ver Información Meteorológica
+                    Ver Información Sismos
                 </button>
             </div>
 
-            <div class="filter-section">
-                <div class="filter-title">Filtros de Eventos</div>
-                
+            <div class="seccion-filtros">
+                <div class="titulo-filtros">Filtros de Eventos</div>
+
                 <label>Categoría:</label>
-                <select id="categoryFilter">
+                <select id="filtroCategoria">
                     <option value="">Todas las categorías</option>
                 </select>
-                
+
                 <label>Estado:</label>
-                <select id="statusFilter">
+                <select id="filtroEstado">
                     <option value="">Todos</option>
                     <option value="open">Abiertos/Activos</option>
                     <option value="closed">Cerrados</option>
                 </select>
-                
+
                 <label>Últimos días:</label>
-                <select id="daysFilter">
+                <select id="filtroDias">
                     <option value="">Todos los eventos</option>
                     <option value="7">Últimos 7 días</option>
                     <option value="30">Últimos 30 días</option>
                     <option value="90">Últimos 90 días</option>
                 </select>
-                
+
                 <label>Límite de eventos:</label>
-                <select id="limitFilter">
+                <select id="filtroLimite">
                     <option value="50">50 eventos</option>
                     <option value="100">100 eventos</option>
                     <option value="200">200 eventos</option>
                     <option value="">Sin límite</option>
                 </select>
             </div>
-            
-            <div class="filter-section">
-                <div class="filter-title">Capas del Mapa</div>
-                <div id="layerControls"></div>
+
+            <div class="seccion-filtros">
+                <div class="titulo-filtros">Capas del Mapa</div>
+                <div id="controlesCapas"></div>
             </div>
-            
-            <button id="applyFilters">Aplicar Filtros</button>
-            <button id="clearFilters">Limpiar Filtros</button>
-            
-            <div id="loading" class="loading" style="display: none;">
+
+            <button id="aplicarFiltros">Aplicar Filtros</button>
+            <button id="limpiarFiltros">Limpiar Filtros</button>
+
+            <div id="cargando" class="indicador-carga" style="display: none;">
                 Cargando datos...
             </div>
         </div>
-        
-        <div class="map-container">
-            <div id="map"></div>
+
+        <div class="contenedor-mapa">
+            <div id="mapa"></div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </body>
+
 </html>
