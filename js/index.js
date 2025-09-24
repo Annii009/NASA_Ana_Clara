@@ -1,250 +1,271 @@
-class NASAEONETMap {
+// Clase principal para gestionar el mapa de eventos naturales de la NASA
+class MapaEventosNASA {
     constructor() {
-        this.map = null;
-        this.eventsLayer = null;
-        this.nasaLayers = new Map();
-        this.categories = [];
-        this.currentEvents = [];
-        this.isLoading = false;
+        this.mapa = null;
+        this.capaEventos = null;
+        this.capasNASA = new Map();
+        this.categorias = [];
+        this.eventosActuales = [];
+        this.cargando = false;
 
-        this.init();
+        this.inicializar();
     }
 
-    async init() {
+    // Método de inicialización principal
+    async inicializar() {
         try {
-            this.initMap();
-            this.setupEventListeners();
+            this.inicializarMapa();
+            this.configurarEventos();
 
-            // Cargar datos iniciales
+            // Cargar datos iniciales de forma paralela
             await Promise.all([
-                this.loadCategories(),
-                this.loadNASALayers(),
-                this.loadEvents()
+                this.cargarCategorias(),
+                this.cargarCapasNASA(),
+                this.cargarEventos()
             ]);
 
-            this.hideError();
+            this.ocultarError();
         } catch (error) {
             console.error('Error inicializando la aplicación:', error);
-            this.showError('Error inicializando la aplicación. Por favor, recarga la página.');
+            this.mostrarError('Error inicializando la aplicación. Por favor, recarga la página.');
         }
     }
 
-    initMap() {
-        this.map = L.map('map', {
+    // Inicializar el mapa de Leaflet
+    inicializarMapa() {
+        this.mapa = L.map('mapa', {
             zoomControl: true,
             attributionControl: true
         }).setView([20, 0], 2);
 
+        // Capa base de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors | NASA EONET Data',
             maxZoom: 18,
             minZoom: 2
-        }).addTo(this.map);
+        }).addTo(this.mapa);
 
-        this.eventsLayer = L.layerGroup().addTo(this.map);
+        // Capa para agrupar los eventos
+        this.capaEventos = L.layerGroup().addTo(this.mapa);
         console.log('Mapa inicializado correctamente');
     }
 
-    async loadCategories() {
+    // Cargar las categorías de eventos desde la API de la NASA
+    async cargarCategorias() {
         try {
             console.log('Cargando categorías...');
-            const response = await fetch('https://eonet.gsfc.nasa.gov/api/v3/categories');
+            const respuesta = await fetch('https://eonet.gsfc.nasa.gov/api/v3/categories');
 
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
+            if (!respuesta.ok) {
+                throw new Error(`Error HTTP: ${respuesta.status}`);
             }
 
-            const data = await response.json();
-            this.categories = data.categories || [];
-            this.populateCategoryFilter();
+            const datos = await respuesta.json();
+            this.categorias = datos.categories || [];
+            this.llenarFiltroCategorias();
 
-            console.log(`Cargadas ${this.categories.length} categorías`);
+            console.log(`Cargadas ${this.categorias.length} categorías`);
         } catch (error) {
             console.error('Error cargando categorías:', error);
-            this.showError('No se pudieron cargar las categorías de eventos');
+            this.mostrarError('No se pudieron cargar las categorías de eventos');
         }
     }
 
-    populateCategoryFilter() {
-        const select = document.getElementById('categoryFilter');
-        if (!select) return;
+    // Llenar el selector de categorías con las opciones disponibles
+    llenarFiltroCategorias() {
+        const selector = document.getElementById('filtroCategoria');
+        if (!selector) return;
 
-        while (select.children.length > 1) {
-            select.removeChild(select.lastChild);
+        // Limpiar opciones existentes (excepto la primera)
+        while (selector.children.length > 1) {
+            selector.removeChild(selector.lastChild);
         }
 
-        this.categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.title;
-            select.appendChild(option);
+        // Agregar cada categoría como opción
+        this.categorias.forEach(categoria => {
+            const opcion = document.createElement('option');
+            opcion.value = categoria.id;
+            opcion.textContent = categoria.title;
+            selector.appendChild(opcion);
         });
     }
 
-    async loadNASALayers() {
+    // Cargar las capas adicionales de la NASA
+    async cargarCapasNASA() {
         try {
             console.log('Cargando capas NASA...');
-            const response = await fetch('https://eonet.gsfc.nasa.gov/api/v3/layers');
+            const respuesta = await fetch('https://eonet.gsfc.nasa.gov/api/v3/layers');
 
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
+            if (!respuesta.ok) {
+                throw new Error(`Error HTTP: ${respuesta.status}`);
             }
 
-            const data = await response.json();
-            const layers = (data.layers || []).slice(0, 10);
-            this.populateLayerControls(layers);
+            const datos = await respuesta.json();
+            const capas = (datos.layers || []).slice(0, 10); // Limitar a 10 capas
+            this.llenarControlesCapas(capas);
 
-            console.log(`Cargadas ${layers.length} capas NASA`);
+            console.log(`Cargadas ${capas.length} capas NASA`);
         } catch (error) {
             console.error('Error cargando capas NASA:', error);
-            this.updateLayerControlsError();
+            this.actualizarControlesCapasError();
         }
     }
 
-    populateLayerControls(layers) {
-        const container = document.getElementById('layerControls');
-        if (!container) return;
+    // Crear controles de interfaz para las capas de la NASA
+    llenarControlesCapas(capas) {
+        const contenedor = document.getElementById('controlesCapas');
+        if (!contenedor) return;
 
-        container.innerHTML = '';
+        contenedor.innerHTML = '';
 
-        if (layers.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #a0a0a0;">No hay capas disponibles</div>';
+        if (capas.length === 0) {
+            contenedor.innerHTML = '<div style="text-align: center; color: #a0a0a0;">No hay capas disponibles</div>';
             return;
         }
 
-        layers.forEach((layer, index) => {
-            if (layer.serviceTypeId && layer.serviceTypeId.includes('WMS')) {
-                const layerItem = document.createElement('div');
-                layerItem.className = 'layer-item';
-                layerItem.innerHTML = `
-                    <input type="checkbox" id="layer_${index}" data-layer="${index}">
-                    <label for="layer_${index}">${layer.name || `Capa ${index + 1}`}</label>
-                `;
-                container.appendChild(layerItem);
-                this.nasaLayers.set(index, layer);
+        // Crear un control para cada capa disponible
+        capas.forEach((capa, indice) => {
+            if (capa.serviceTypeId && capa.serviceTypeId.includes('WMS')) {
+                const elementoCapa = document.createElement('div');
+                elementoCapa.className = 'elemento-capa';
+                elementoCapa.innerHTML = `
+                        <input type="checkbox" id="capa_${indice}" data-capa="${indice}">
+                        <label for="capa_${indice}">${capa.name || `Capa ${indice + 1}`}</label>
+                    `;
+                contenedor.appendChild(elementoCapa);
+                this.capasNASA.set(indice, capa);
             }
         });
     }
 
-    updateLayerControlsError() {
-        const container = document.getElementById('layerControls');
-        if (container) {
-            container.innerHTML = '<div style="text-align: center; color: #ff6b6b;">Error cargando capas</div>';
+    // Mostrar mensaje de error en los controles de capas
+    actualizarControlesCapasError() {
+        const contenedor = document.getElementById('controlesCapas');
+        if (contenedor) {
+            contenedor.innerHTML = '<div style="text-align: center; color: #ff6b6b;">Error cargando capas</div>';
         }
     }
 
-    async loadEvents() {
-        if (this.isLoading) return;
+    // Cargar eventos desde la API de la NASA según los filtros aplicados
+    async cargarEventos() {
+        if (this.cargando) return;
 
-        this.showLoading(true);
-        this.isLoading = true;
+        this.mostrarCarga(true);
+        this.cargando = true;
 
         try {
-            const url = this.buildEventsURL();
+            const url = this.construirURLEventos();
             console.log('Cargando eventos desde:', url);
 
-            const response = await fetch(url, {
+            const respuesta = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
                 }
             });
 
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+            if (!respuesta.ok) {
+                throw new Error(`Error HTTP: ${respuesta.status} - ${respuesta.statusText}`);
             }
 
-            const data = await response.json();
-            console.log('Respuesta de la API:', data);
+            const datos = await respuesta.json();
+            console.log('Respuesta de la API:', datos);
 
-            if (data.features && Array.isArray(data.features)) {
-                this.currentEvents = data.features;
-            } else if (data.events && Array.isArray(data.events)) {
-                this.currentEvents = this.convertToGeoJSON(data.events);
+            // Procesar los eventos según el formato de respuesta
+            if (datos.features && Array.isArray(datos.features)) {
+                this.eventosActuales = datos.features;
+            } else if (datos.events && Array.isArray(datos.events)) {
+                this.eventosActuales = this.convertirAGeoJSON(datos.events);
             } else {
-                console.warn('No se encontraron eventos en la respuesta:', data);
-                this.currentEvents = [];
+                console.warn('No se encontraron eventos en la respuesta:', datos);
+                this.eventosActuales = [];
             }
 
-            this.displayEvents();
-            this.updateStats();
-            this.hideError();
+            this.mostrarEventos();
+            this.actualizarEstadisticas();
+            this.ocultarError();
 
-            console.log(`Cargados ${this.currentEvents.length} eventos`);
+            console.log(`Cargados ${this.eventosActuales.length} eventos`);
 
         } catch (error) {
             console.error('Error cargando eventos:', error);
-            this.showError(`Error cargando eventos: ${error.message}`);
-            this.currentEvents = [];
-            this.updateStats();
+            this.mostrarError(`Error cargando eventos: ${error.message}`);
+            this.eventosActuales = [];
+            this.actualizarEstadisticas();
         } finally {
-            this.showLoading(false);
-            this.isLoading = false;
+            this.mostrarCarga(false);
+            this.cargando = false;
         }
     }
 
-    buildEventsURL() {
-        const baseURL = 'https://eonet.gsfc.nasa.gov/api/v3/events';
-        const params = new URLSearchParams();
+    // Construir la URL para la solicitud de eventos con los filtros aplicados
+    construirURLEventos() {
+        const urlBase = 'https://eonet.gsfc.nasa.gov/api/v3/events';
+        const parametros = new URLSearchParams();
 
-        const categoryEl = document.getElementById('categoryFilter');
-        const statusEl = document.getElementById('statusFilter');
-        const daysEl = document.getElementById('daysFilter');
-        const limitEl = document.getElementById('limitFilter');
+        // Obtener valores de los filtros
+        const elementoCategoria = document.getElementById('filtroCategoria');
+        const elementoEstado = document.getElementById('filtroEstado');
+        const elementoDias = document.getElementById('filtroDias');
+        const elementoLimite = document.getElementById('filtroLimite');
 
-        if (categoryEl?.value) params.append('category', categoryEl.value);
-        if (statusEl?.value) params.append('status', statusEl.value);
-        if (daysEl?.value) params.append('days', daysEl.value);
+        // Agregar parámetros según los filtros seleccionados
+        if (elementoCategoria?.value) parametros.append('category', elementoCategoria.value);
+        if (elementoEstado?.value) parametros.append('status', elementoEstado.value);
+        if (elementoDias?.value) parametros.append('days', elementoDias.value);
 
-        const limit = limitEl?.value || '50';
-        if (limit) params.append('limit', limit);
+        const limite = elementoLimite?.value || '50';
+        if (limite) parametros.append('limit', limite);
 
-        return `${baseURL}/geojson?${params.toString()}`;
+        return `${urlBase}/geojson?${parametros.toString()}`;
     }
 
-    convertToGeoJSON(events) {
-        return events.filter(event => event.geometry).map(event => ({
+    // Convertir eventos al formato GeoJSON si es necesario
+    convertirAGeoJSON(eventos) {
+        return eventos.filter(evento => evento.geometry).map(evento => ({
             type: 'Feature',
             properties: {
-                id: event.id,
-                title: event.title,
-                description: event.description || '',
-                closed: event.closed,
-                categories: event.categories || [],
-                sources: event.sources || []
+                id: evento.id,
+                title: evento.title,
+                description: evento.description || '',
+                closed: evento.closed,
+                categories: evento.categories || [],
+                sources: evento.sources || []
             },
-            geometry: event.geometry
+            geometry: evento.geometry
         }));
     }
 
-    displayEvents() {
-        this.eventsLayer.clearLayers();
+    // Mostrar los eventos en el mapa como marcadores
+    mostrarEventos() {
+        this.capaEventos.clearLayers();
 
-        if (this.currentEvents.length === 0) {
+        if (this.eventosActuales.length === 0) {
             console.log('No hay eventos para mostrar');
             return;
         }
 
-        let markersCreated = 0;
-        this.currentEvents.forEach((event, index) => {
+        let marcadoresCreados = 0;
+        this.eventosActuales.forEach((evento, indice) => {
             try {
-                const marker = this.createEventMarker(event);
-                if (marker) {
-                    this.eventsLayer.addLayer(marker);
-                    markersCreated++;
+                const marcador = this.crearMarcadorEvento(evento);
+                if (marcador) {
+                    this.capaEventos.addLayer(marcador);
+                    marcadoresCreados++;
                 }
             } catch (error) {
-                console.error(`Error creando marcador para evento ${index}:`, error);
+                console.error(`Error creando marcador para evento ${indice}:`, error);
             }
         });
 
-        console.log(`Creados ${markersCreated} marcadores de ${this.currentEvents.length} eventos`);
+        console.log(`Creados ${marcadoresCreados} marcadores de ${this.eventosActuales.length} eventos`);
 
-        if (markersCreated > 0) {
+        // Ajustar la vista del mapa para mostrar todos los marcadores
+        if (marcadoresCreados > 0) {
             try {
-                const bounds = this.eventsLayer.getBounds();
-                if (bounds.isValid()) {
-                    this.map.fitBounds(bounds, { padding: [20, 20] });
+                const limites = this.capaEventos.getBounds();
+                if (limites.isValid()) {
+                    this.mapa.fitBounds(limites, { padding: [20, 20] });
                 }
             } catch (error) {
                 console.error('Error ajustando vista del mapa:', error);
@@ -252,82 +273,92 @@ class NASAEONETMap {
         }
     }
 
-    createEventMarker(event) {
-        const coords = event.geometry?.coordinates;
-        if (!coords || !Array.isArray(coords)) {
-            console.warn('Coordenadas inválidas para evento:', event.properties?.id);
+    // Crear un marcador para un evento específico
+    crearMarcadorEvento(evento) {
+        const coordenadas = evento.geometry?.coordinates;
+        if (!coordenadas || !Array.isArray(coordenadas)) {
+            console.warn('Coordenadas inválidas para evento:', evento.properties?.id);
             return null;
         }
 
         let latLng;
 
         try {
-            if (event.geometry.type === 'Point') {
-                latLng = [coords[1], coords[0]];
+            // Determinar la posición del marcador según el tipo de geometría
+            if (evento.geometry.type === 'Point') {
+                latLng = [coordenadas[1], coordenadas[0]]; // [lat, lng]
             } else {
-                const geoJsonLayer = L.geoJSON(event.geometry);
-                const bounds = geoJsonLayer.getBounds();
-                latLng = bounds.getCenter();
+                // Para geometrías más complejas, usar el centro del área
+                const capaGeoJSON = L.geoJSON(evento.geometry);
+                const limites = capaGeoJSON.getBounds();
+                latLng = limites.getCenter();
             }
         } catch (error) {
             console.error('Error procesando geometría:', error);
             return null;
         }
 
+        // Validar coordenadas
         if (!Array.isArray(latLng) || latLng.length !== 2 ||
             Math.abs(latLng[0]) > 90 || Math.abs(latLng[1]) > 180) {
             console.warn('Coordenadas fuera de rango:', latLng);
             return null;
         }
 
-        const category = event.properties.categories?.[0];
-        const categoryId = category?.id;
-        const color = this.getCategoryColor(categoryId);
-        const isOpen = !event.properties.closed;
+        // Obtener información de categoría y estado
+        const categoria = evento.properties.categories?.[0];
+        const idCategoria = categoria?.id;
+        const color = this.obtenerColorCategoria(idCategoria);
+        const estaAbierto = !evento.properties.closed;
 
-        const icon = this.createCustomIcon(categoryId, color, isOpen);
+        // Crear icono personalizado
+        const icono = this.crearIconoPersonalizado(idCategoria, color, estaAbierto);
 
-        const marker = L.marker(latLng, {
-            icon: icon
+        // Crear marcador
+        const marcador = L.marker(latLng, {
+            icon: icono
         });
 
-        const popupContent = this.createPopupContent(event);
-        marker.bindPopup(popupContent, {
+        // Agregar ventana emergente con información
+        const contenidoPopup = this.crearContenidoPopup(evento);
+        marcador.bindPopup(contenidoPopup, {
             maxWidth: 300,
-            className: 'custom-popup'
+            className: 'popup-personalizado'
         });
 
-        return marker;
+        return marcador;
     }
 
-    createCustomIcon(categoryId, color, isOpen) {
-        const iconClass = this.getCategoryIcon(categoryId);
+    // Crear un icono personalizado para el marcador
+    crearIconoPersonalizado(idCategoria, color, estaAbierto) {
+        const claseIcono = this.obtenerIconoCategoria(idCategoria);
 
         return L.divIcon({
             html: `
-                <div style="
-                    background-color: ${color};
-                    width: 30px;
-                    height: 30px;
-                    border-radius: 50%;
-                    border: 3px solid white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                    opacity: ${isOpen ? '1' : '0.7'};
-                ">
-                    <i class="${iconClass}" style="color: white; font-size: 14px;"></i>
-                </div>
-            `,
-            className: 'custom-marker-icon',
+                    <div style="
+                        background-color: ${color};
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                        opacity: ${estaAbierto ? '1' : '0.7'};
+                    ">
+                        <i class="${claseIcono}" style="color: white; font-size: 14px;"></i>
+                    </div>
+                `,
+            className: 'icono-marcador-personalizado',
             iconSize: [30, 30],
             iconAnchor: [15, 15]
         });
     }
 
-    getCategoryIcon(categoryId) {
-        const icons = {
+    // Obtener el icono correspondiente a una categoría
+    obtenerIconoCategoria(idCategoria) {
+        const iconos = {
             'drought': 'bi bi-sun',
             'dustHaze': 'bi bi-cloud-haze',
             'earthquakes': 'bi bi-geo-alt',
@@ -342,11 +373,12 @@ class NASAEONETMap {
             'waterColor': 'bi bi-water',
             'wildfires': 'bi bi-fire'
         };
-        return icons[categoryId] || 'bi bi-geo';
+        return iconos[idCategoria] || 'bi bi-geo';
     }
 
-    getCategoryColor(categoryId) {
-        const colors = {
+    // Obtener el color correspondiente a una categoría
+    obtenerColorCategoria(idCategoria) {
+        const colores = {
             'drought': '#8B4513',
             'dustHaze': '#DAA520',
             'earthquakes': '#DC143C',
@@ -361,191 +393,204 @@ class NASAEONETMap {
             'waterColor': '#20B2AA',
             'wildfires': '#FF4500'
         };
-        return colors[categoryId] || '#00d4ff';
+        return colores[idCategoria] || '#00d4ff';
     }
 
-    createPopupContent(event) {
-        const props = event.properties;
-        const isOpen = !props.closed;
-        const category = props.categories?.[0];
-        const categoryId = category?.id;
-        const iconClass = this.getCategoryIcon(categoryId);
+    // Crear el contenido para la ventana emergente del marcador
+    crearContenidoPopup(evento) {
+        const propiedades = evento.properties;
+        const estaAbierto = !propiedades.closed;
+        const categoria = propiedades.categories?.[0];
+        const idCategoria = categoria?.id;
+        const claseIcono = this.obtenerIconoCategoria(idCategoria);
 
         // Obtener coordenadas para el enlace meteorológico
-        const coords = event.geometry?.coordinates;
-        let weatherLink = '';
+        const coordenadas = evento.geometry?.coordinates;
+        let enlaceClima = '';
 
-        if (coords && event.geometry.type === 'Point') {
-            const lat = coords[1];
-            const lng = coords[0];
-            weatherLink = `
-            <div class="popup-weather-link">
-                <a href="meteo.html?lat=${lat}&lng=${lng}&event=${encodeURIComponent(props.title)}" 
-                   target="_blank" 
-                   class="weather-btn">
-                   <i class="bi bi-cloud-sun"></i> Ver Clima en Mapa Meteorológico
-                </a>
-            </div>
-        `;
+        if (coordenadas && evento.geometry.type === 'Point') {
+            const lat = coordenadas[1];
+            const lng = coordenadas[0];
+            enlaceClima = `
+                <div class="enlace-clima-popup">
+                    <a href="sismos.html?lat=${lat}&lng=${lng}&event=${encodeURIComponent(propiedades.title)}" 
+                       target="_blank" 
+                       class="boton-clima">
+                       <i class="bi bi-cloud-sun"></i> Ver Clima en Mapa Meteorológico
+                    </a>
+                </div>
+            `;
         }
 
         return `
-        <div class="popup-content">
-            <div class="popup-title">
-                <i class="${iconClass}" style="margin-right: 5px;"></i>
-                ${props.title || 'Evento sin título'}
-            </div>
-            ${category ? `<div class="popup-category">${category.title}</div>` : ''}
-            <div class="popup-status ${isOpen ? 'status-open' : 'status-closed'}">
-                ${isOpen ? '🔴 ACTIVO' : '✅ FINALIZADO'}
-            </div>
-            ${props.description ? `<p>${props.description}</p>` : ''}
-            ${weatherLink}
-            ${props.sources?.length > 0 ? `
-                <p><strong>Fuentes:</strong><br>
-                ${props.sources.map(source =>
-            `<a href="${source.url}" target="_blank" rel="noopener">${source.id}</a>`
+            <div class="contenido-popup">
+                <div class="titulo-popup">
+                    <i class="${claseIcono}" style="margin-right: 5px;"></i>
+                    ${propiedades.title || 'Evento sin título'}
+                </div>
+                ${categoria ? `<div class="categoria-popup">${categoria.title}</div>` : ''}
+                <div class="estado-popup ${estaAbierto ? 'estado-abierto' : 'estado-cerrado'}">
+                    ${estaAbierto ? '🔴 ACTIVO' : '✅ FINALIZADO'}
+                </div>
+                ${propiedades.description ? `<p>${propiedades.description}</p>` : ''}
+                ${enlaceClima}
+                ${propiedades.sources?.length > 0 ? `
+                    <p><strong>Fuentes:</strong><br>
+                    ${propiedades.sources.map(fuente =>
+            `<a href="${fuente.url}" target="_blank" rel="noopener">${fuente.id}</a>`
         ).join(', ')}
-                </p>
-            ` : ''}
-        </div>
-    `;
+                    </p>
+                ` : ''}
+            </div>
+        `;
     }
 
-    updateStats() {
-        const eventCountEl = document.getElementById('eventCount');
-        if (eventCountEl) {
-            eventCountEl.textContent = this.currentEvents.length;
+    // Actualizar las estadísticas en la interfaz
+    actualizarEstadisticas() {
+        const elementoContador = document.getElementById('contadorEventos');
+        if (elementoContador) {
+            elementoContador.textContent = this.eventosActuales.length;
         }
     }
 
-    showLoading(show) {
-        const loadingEl = document.getElementById('loading');
-        const buttonEl = document.getElementById('applyFilters');
+    // Mostrar u ocultar el indicador de carga
+    mostrarCarga(mostrar) {
+        const elementoCarga = document.getElementById('cargando');
+        const elementoBoton = document.getElementById('aplicarFiltros');
 
-        if (loadingEl) {
-            loadingEl.style.display = show ? 'block' : 'none';
+        if (elementoCarga) {
+            elementoCarga.style.display = mostrar ? 'block' : 'none';
         }
-        if (buttonEl) {
-            buttonEl.disabled = show;
-        }
-    }
-
-    showError(message) {
-        // Crear elemento de error si no existe
-        let errorEl = document.getElementById('errorMessage');
-        if (!errorEl) {
-            errorEl = document.createElement('div');
-            errorEl.id = 'errorMessage';
-            errorEl.className = 'error-message';
-            document.querySelector('.sidebar').appendChild(errorEl);
-        }
-        errorEl.innerHTML = message;
-        errorEl.style.display = 'block';
-    }
-
-    hideError() {
-        const errorEl = document.getElementById('errorMessage');
-        if (errorEl) {
-            errorEl.style.display = 'none';
+        if (elementoBoton) {
+            elementoBoton.disabled = mostrar;
         }
     }
 
-    setupEventListeners() {
-        const applyBtn = document.getElementById('applyFilters');
-        const clearBtn = document.getElementById('clearFilters');
-        const weatherBtn = document.getElementById('openWeatherPage');
-        const layerControls = document.getElementById('layerControls');
+    // Mostrar un mensaje de error
+    mostrarError(mensaje) {
+        let elementoError = document.getElementById('mensajeError');
+        if (!elementoError) {
+            elementoError = document.createElement('div');
+            elementoError.id = 'mensajeError';
+            elementoError.className = 'mensaje-error';
+            document.querySelector('.panel-lateral').appendChild(elementoError);
+        }
+        elementoError.innerHTML = mensaje;
+        elementoError.style.display = 'block';
+    }
 
-        if (applyBtn) {
-            applyBtn.addEventListener('click', () => {
-                this.loadEvents();
+    // Ocultar el mensaje de error
+    ocultarError() {
+        const elementoError = document.getElementById('mensajeError');
+        if (elementoError) {
+            elementoError.style.display = 'none';
+        }
+    }
+
+    // Configurar los event listeners para los controles de la interfaz
+    configurarEventos() {
+        const botonAplicar = document.getElementById('aplicarFiltros');
+        const botonLimpiar = document.getElementById('limpiarFiltros');
+        const botonSismo = document.getElementById('botonAbrirSismo');
+        const controlesCapas = document.getElementById('controlesCapas');
+
+        // Aplicar filtros
+        if (botonAplicar) {
+            botonAplicar.addEventListener('click', () => {
+                this.cargarEventos();
             });
         }
 
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                this.clearFilters();
+        // Limpiar filtros
+        if (botonLimpiar) {
+            botonLimpiar.addEventListener('click', () => {
+                this.limpiarFiltros();
             });
         }
 
-        if (weatherBtn) {
-            weatherBtn.addEventListener('click', () => {
-                window.open('meteo.html', '_blank');
+        // Abrir página de clima
+        if (botonSismo) {
+            botonSismo.addEventListener('click', () => {
+                window.open('sismos.html', '_blank');
             });
         }
 
-        if (layerControls) {
-            layerControls.addEventListener('change', (e) => {
+        // Controlar capas del mapa
+        if (controlesCapas) {
+            controlesCapas.addEventListener('change', (e) => {
                 if (e.target.type === 'checkbox') {
-                    const layerIndex = parseInt(e.target.dataset.layer);
-                    this.toggleNASALayer(layerIndex, e.target.checked);
+                    const indiceCapa = parseInt(e.target.dataset.capa);
+                    this.alternarCapaNASA(indiceCapa, e.target.checked);
                 }
             });
         }
 
-        ['categoryFilter', 'statusFilter', 'daysFilter', 'limitFilter'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('keydown', (e) => {
+        // Permitir aplicar filtros con la tecla Enter
+        ['filtroCategoria', 'filtroEstado', 'filtroDias', 'filtroLimite'].forEach(id => {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
-                        this.loadEvents();
+                        this.cargarEventos();
                     }
                 });
             }
         });
     }
 
-    clearFilters() {
-        const filters = [
-            { id: 'categoryFilter', value: '' },
-            { id: 'statusFilter', value: '' },
-            { id: 'daysFilter', value: '' },
-            { id: 'limitFilter', value: '50' }
+    // Restablecer todos los filtros a sus valores por defecto
+    limpiarFiltros() {
+        const filtros = [
+            { id: 'filtroCategoria', valor: '' },
+            { id: 'filtroEstado', valor: '' },
+            { id: 'filtroDias', valor: '' },
+            { id: 'filtroLimite', valor: '50' }
         ];
 
-        filters.forEach(filter => {
-            const element = document.getElementById(filter.id);
-            if (element) {
-                element.value = filter.value;
+        filtros.forEach(filtro => {
+            const elemento = document.getElementById(filtro.id);
+            if (elemento) {
+                elemento.value = filtro.valor;
             }
         });
 
-        this.loadEvents();
+        this.cargarEventos();
     }
 
-    toggleNASALayer(layerIndex, show) {
-        const layerInfo = this.nasaLayers.get(layerIndex);
-        if (!layerInfo) {
-            console.warn('Información de capa no encontrada para índice:', layerIndex);
+    // Activar o desactivar una capa de la NASA
+    alternarCapaNASA(indiceCapa, mostrar) {
+        const informacionCapa = this.capasNASA.get(indiceCapa);
+        if (!informacionCapa) {
+            console.warn('Información de capa no encontrada para índice:', indiceCapa);
             return;
         }
 
-        if (show) {
+        if (mostrar) {
             try {
-                const wmsLayer = L.tileLayer.wms(layerInfo.serviceUrl, {
-                    layers: layerInfo.name,
+                // Crear capa WMS
+                const capaWMS = L.tileLayer.wms(informacionCapa.serviceUrl, {
+                    layers: informacionCapa.name,
                     format: 'image/png',
                     transparent: true,
                     opacity: 0.7,
                     attribution: 'NASA',
-                    ...layerInfo.parameters
+                    ...informacionCapa.parameters
                 });
 
-                wmsLayer.addTo(this.map);
-                this.nasaLayers.set(`active_${layerIndex}`, wmsLayer);
+                capaWMS.addTo(this.mapa);
+                this.capasNASA.set(`activa_${indiceCapa}`, capaWMS);
 
-                console.log('Capa NASA agregada:', layerInfo.name);
+                console.log('Capa NASA agregada:', informacionCapa.name);
             } catch (error) {
                 console.error('Error agregando capa NASA:', error);
-                this.showError('Error agregando capa del mapa');
+                this.mostrarError('Error agregando capa del mapa');
             }
         } else {
-            const activeLayer = this.nasaLayers.get(`active_${layerIndex}`);
-            if (activeLayer) {
-                this.map.removeLayer(activeLayer);
-                this.nasaLayers.delete(`active_${layerIndex}`);
-                console.log('Capa NASA removida:', layerInfo.name);
+            const capaActiva = this.capasNASA.get(`activa_${indiceCapa}`);
+            if (capaActiva) {
+                this.mapa.removeLayer(capaActiva);
+                this.capasNASA.delete(`activa_${indiceCapa}`);
+                console.log('Capa NASA removida:', informacionCapa.name);
             }
         }
     }
@@ -553,21 +598,24 @@ class NASAEONETMap {
 
 // Inicializar la aplicación cuando se carga la página
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar que Leaflet esté disponible
     if (typeof L === 'undefined') {
         console.error('Leaflet no está disponible');
         alert('Error: La librería de mapas no está disponible. Por favor, recarga la página.');
         return;
     }
 
-    const mapElement = document.getElementById('map');
-    if (!mapElement) {
-        console.error('Elemento #map no encontrado');
+    // Verificar que el elemento del mapa exista
+    const elementoMapa = document.getElementById('mapa');
+    if (!elementoMapa) {
+        console.error('Elemento #mapa no encontrado');
         alert('Error: El contenedor del mapa no se encontró en la página.');
         return;
     }
 
     try {
-        window.nasaEONETApp = new NASAEONETMap();
+        // Crear instancia de la aplicación
+        window.aplicacionEventosNASA = new MapaEventosNASA();
         console.log('Aplicación NASA EONET inicializada correctamente');
     } catch (error) {
         console.error('Error fatal inicializando la aplicación:', error);
@@ -575,10 +623,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.addEventListener('error', (event) => {
-    console.error('Error global capturado:', event.error);
+// Manejar errores globales
+window.addEventListener('error', (evento) => {
+    console.error('Error global capturado:', evento.error);
 });
 
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Promise rechazada no manejada:', event.reason);
+window.addEventListener('unhandledrejection', (evento) => {
+    console.error('Promise rechazada no manejada:', evento.reason);
 });
