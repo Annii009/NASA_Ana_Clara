@@ -411,15 +411,6 @@ class MapaEventosNASA {
         if (coordenadas && evento.geometry.type === 'Point') {
             const lat = coordenadas[1];
             const lng = coordenadas[0];
-            enlaceClima = `
-                <div class="enlace-clima-popup">
-                    <a href="sismos.html?lat=${lat}&lng=${lng}&event=${encodeURIComponent(propiedades.title)}" 
-                       target="_blank" 
-                       class="boton-clima">
-                       <i class="bi bi-cloud-sun"></i> Ver Clima en Mapa Meteorológico
-                    </a>
-                </div>
-            `;
         }
 
         return `
