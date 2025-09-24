@@ -118,32 +118,6 @@ button:disabled {
     color: #cb7a5b;
 }
 
-.control-capa {
-    background: #9da696;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.elemento-capa {
-    display: flex;
-    align-items: center;
-    margin: 8px 0;
-}
-
-.elemento-capa input[type="checkbox"] {
-    width: auto;
-    margin-right: 10px;
-    transform: scale(1.2);
-}
-
-.elemento-capa label {
-    font-size: 13px;
-    cursor: pointer;
-    flex: 1;
-    color: #232226;
-}
-
 .contenido-popup {
     color: #232226;
     max-width: 300px;
