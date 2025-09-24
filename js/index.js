@@ -30,22 +30,18 @@ class NASAEONETMap {
     }
 
     initMap() {
-        // Inicializar el mapa con una vista global
         this.map = L.map('map', {
             zoomControl: true,
             attributionControl: true
         }).setView([20, 0], 2);
 
-        // Agregar capa base del mapa
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors | NASA EONET Data',
             maxZoom: 18,
             minZoom: 2
         }).addTo(this.map);
 
-        // Crear grupo de capas para eventos
         this.eventsLayer = L.layerGroup().addTo(this.map);
-
         console.log('Mapa inicializado correctamente');
     }
 
@@ -73,7 +69,6 @@ class NASAEONETMap {
         const select = document.getElementById('categoryFilter');
         if (!select) return;
 
-        // Limpiar opciones existentes (excepto la primera)
         while (select.children.length > 1) {
             select.removeChild(select.lastChild);
         }
@@ -96,7 +91,7 @@ class NASAEONETMap {
             }
 
             const data = await response.json();
-            const layers = (data.layers || []).slice(0, 10); // Limitar a 10 capas
+            const layers = (data.layers || []).slice(0, 10);
             this.populateLayerControls(layers);
 
             console.log(`Cargadas ${layers.length} capas NASA`);
@@ -162,12 +157,9 @@ class NASAEONETMap {
             const data = await response.json();
             console.log('Respuesta de la API:', data);
 
-            // Procesar eventos según el formato de respuesta
             if (data.features && Array.isArray(data.features)) {
-                // Formato GeoJSON
                 this.currentEvents = data.features;
             } else if (data.events && Array.isArray(data.events)) {
-                // Formato estándar, convertir a GeoJSON
                 this.currentEvents = this.convertToGeoJSON(data.events);
             } else {
                 console.warn('No se encontraron eventos en la respuesta:', data);
@@ -204,7 +196,6 @@ class NASAEONETMap {
         if (statusEl?.value) params.append('status', statusEl.value);
         if (daysEl?.value) params.append('days', daysEl.value);
 
-        // Aplicar límite por defecto si no se especifica uno
         const limit = limitEl?.value || '50';
         if (limit) params.append('limit', limit);
 
@@ -227,7 +218,6 @@ class NASAEONETMap {
     }
 
     displayEvents() {
-        // Limpiar eventos anteriores
         this.eventsLayer.clearLayers();
 
         if (this.currentEvents.length === 0) {
@@ -250,7 +240,6 @@ class NASAEONETMap {
 
         console.log(`Creados ${markersCreated} marcadores de ${this.currentEvents.length} eventos`);
 
-        // Ajustar vista del mapa si hay eventos
         if (markersCreated > 0) {
             try {
                 const bounds = this.eventsLayer.getBounds();
@@ -274,9 +263,8 @@ class NASAEONETMap {
 
         try {
             if (event.geometry.type === 'Point') {
-                latLng = [coords[1], coords[0]]; // [lat, lng]
+                latLng = [coords[1], coords[0]];
             } else {
-                // Para geometrías complejas, usar el centro del bbox
                 const geoJsonLayer = L.geoJSON(event.geometry);
                 const bounds = geoJsonLayer.getBounds();
                 latLng = bounds.getCenter();
@@ -286,27 +274,23 @@ class NASAEONETMap {
             return null;
         }
 
-        // Validar coordenadas
         if (!Array.isArray(latLng) || latLng.length !== 2 ||
             Math.abs(latLng[0]) > 90 || Math.abs(latLng[1]) > 180) {
             console.warn('Coordenadas fuera de rango:', latLng);
             return null;
         }
 
-        // Obtener categoría y propiedades
         const category = event.properties.categories?.[0];
         const categoryId = category?.id;
         const color = this.getCategoryColor(categoryId);
         const isOpen = !event.properties.closed;
 
-        // Crear marcador con icono personalizado
         const icon = this.createCustomIcon(categoryId, color, isOpen);
-        
+
         const marker = L.marker(latLng, {
             icon: icon
         });
 
-        // Agregar popup con información del evento
         const popupContent = this.createPopupContent(event);
         marker.bindPopup(popupContent, {
             maxWidth: 300,
@@ -318,7 +302,7 @@ class NASAEONETMap {
 
     createCustomIcon(categoryId, color, isOpen) {
         const iconClass = this.getCategoryIcon(categoryId);
-        
+
         return L.divIcon({
             html: `
                 <div style="
@@ -387,26 +371,45 @@ class NASAEONETMap {
         const categoryId = category?.id;
         const iconClass = this.getCategoryIcon(categoryId);
 
-        return `
-            <div class="popup-content">
-                <div class="popup-title">
-                    <i class="${iconClass}" style="margin-right: 5px;"></i>
-                    ${props.title || 'Evento sin título'}
-                </div>
-                ${category ? `<div class="popup-category">${category.title}</div>` : ''}
-                <div class="popup-status ${isOpen ? 'status-open' : 'status-closed'}">
-                    ${isOpen ? '🔴 ACTIVO' : '✅ FINALIZADO'}
-                </div>
-                ${props.description ? `<p>${props.description}</p>` : ''}
-                ${props.sources?.length > 0 ? `
-                    <p><strong>Fuentes:</strong><br>
-                    ${props.sources.map(source =>
-                        `<a href="${source.url}" target="_blank" rel="noopener">${source.id}</a>`
-                    ).join(', ')}
-                    </p>
-                ` : ''}
+        // Obtener coordenadas para el enlace meteorológico
+        const coords = event.geometry?.coordinates;
+        let weatherLink = '';
+
+        if (coords && event.geometry.type === 'Point') {
+            const lat = coords[1];
+            const lng = coords[0];
+            weatherLink = `
+            <div class="popup-weather-link">
+                <a href="meteo.html?lat=${lat}&lng=${lng}&event=${encodeURIComponent(props.title)}" 
+                   target="_blank" 
+                   class="weather-btn">
+                   <i class="bi bi-cloud-sun"></i> Ver Clima en Mapa Meteorológico
+                </a>
             </div>
         `;
+        }
+
+        return `
+        <div class="popup-content">
+            <div class="popup-title">
+                <i class="${iconClass}" style="margin-right: 5px;"></i>
+                ${props.title || 'Evento sin título'}
+            </div>
+            ${category ? `<div class="popup-category">${category.title}</div>` : ''}
+            <div class="popup-status ${isOpen ? 'status-open' : 'status-closed'}">
+                ${isOpen ? '🔴 ACTIVO' : '✅ FINALIZADO'}
+            </div>
+            ${props.description ? `<p>${props.description}</p>` : ''}
+            ${weatherLink}
+            ${props.sources?.length > 0 ? `
+                <p><strong>Fuentes:</strong><br>
+                ${props.sources.map(source =>
+            `<a href="${source.url}" target="_blank" rel="noopener">${source.id}</a>`
+        ).join(', ')}
+                </p>
+            ` : ''}
+        </div>
+    `;
     }
 
     updateStats() {
@@ -429,11 +432,16 @@ class NASAEONETMap {
     }
 
     showError(message) {
-        const errorEl = document.getElementById('errorMessage');
-        if (errorEl) {
-            errorEl.innerHTML = `<div class="error-message"> ${message}</div>`;
-            errorEl.style.display = 'block';
+        // Crear elemento de error si no existe
+        let errorEl = document.getElementById('errorMessage');
+        if (!errorEl) {
+            errorEl = document.createElement('div');
+            errorEl.id = 'errorMessage';
+            errorEl.className = 'error-message';
+            document.querySelector('.sidebar').appendChild(errorEl);
         }
+        errorEl.innerHTML = message;
+        errorEl.style.display = 'block';
     }
 
     hideError() {
@@ -446,6 +454,7 @@ class NASAEONETMap {
     setupEventListeners() {
         const applyBtn = document.getElementById('applyFilters');
         const clearBtn = document.getElementById('clearFilters');
+        const weatherBtn = document.getElementById('openWeatherPage');
         const layerControls = document.getElementById('layerControls');
 
         if (applyBtn) {
@@ -460,7 +469,12 @@ class NASAEONETMap {
             });
         }
 
-        // Eventos para capas NASA
+        if (weatherBtn) {
+            weatherBtn.addEventListener('click', () => {
+                window.open('meteo.html', '_blank');
+            });
+        }
+
         if (layerControls) {
             layerControls.addEventListener('change', (e) => {
                 if (e.target.type === 'checkbox') {
@@ -470,7 +484,6 @@ class NASAEONETMap {
             });
         }
 
-        // Permitir aplicar filtros con Enter en los selects
         ['categoryFilter', 'statusFilter', 'daysFilter', 'limitFilter'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -498,7 +511,6 @@ class NASAEONETMap {
             }
         });
 
-        // Recargar eventos con filtros limpios
         this.loadEvents();
     }
 
@@ -511,7 +523,6 @@ class NASAEONETMap {
 
         if (show) {
             try {
-                // Crear capa WMS de NASA
                 const wmsLayer = L.tileLayer.wms(layerInfo.serviceUrl, {
                     layers: layerInfo.name,
                     format: 'image/png',
@@ -542,14 +553,12 @@ class NASAEONETMap {
 
 // Inicializar la aplicación cuando se carga la página
 document.addEventListener('DOMContentLoaded', () => {
-    // Verificar que Leaflet esté disponible
     if (typeof L === 'undefined') {
         console.error('Leaflet no está disponible');
         alert('Error: La librería de mapas no está disponible. Por favor, recarga la página.');
         return;
     }
 
-    // Verificar que el elemento del mapa existe
     const mapElement = document.getElementById('map');
     if (!mapElement) {
         console.error('Elemento #map no encontrado');
@@ -558,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        // Inicializar la aplicación
         window.nasaEONETApp = new NASAEONETMap();
         console.log('Aplicación NASA EONET inicializada correctamente');
     } catch (error) {
@@ -567,7 +575,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Manejo de errores globales
 window.addEventListener('error', (event) => {
     console.error('Error global capturado:', event.error);
 });
