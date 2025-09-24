@@ -1,3 +1,5 @@
+/* Estilos para la aplicación de Eventos Naturales NASA */
+
 body {
     margin: 0;
     padding: 0;
@@ -6,12 +8,12 @@ body {
     color: #232226;
 }
 
-.container {
+.contenedor-principal {
     display: flex;
     height: 100vh;
 }
 
-.sidebar {
+.panel-lateral {
     width: 350px;
     background: #747c64;
     padding: 20px;
@@ -20,12 +22,12 @@ body {
     z-index: 1000;
 }
 
-.map-container {
+.contenedor-mapa {
     flex: 1;
     position: relative;
 }
 
-#map {
+#mapa {
     height: 100%;
     width: 100%;
 }
@@ -37,7 +39,7 @@ h1 {
     text-align: center;
 }
 
-.filter-section {
+.seccion-filtros {
     margin-bottom: 25px;
     background: #e8e2d8;
     padding: 15px;
@@ -45,7 +47,7 @@ h1 {
     border-left: 4px solid #cb7a5b;
 }
 
-.filter-title {
+.titulo-filtros {
     font-weight: bold;
     margin-bottom: 10px;
     color: #5c757a;
@@ -71,7 +73,7 @@ select option {
 button {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(45deg, #cb7a5b, #a85e3e);
+    background: #cb7a5b;
     color: #e8e2d8;
     border: none;
     border-radius: 6px;
@@ -83,7 +85,7 @@ button {
 }
 
 button:hover {
-    background: linear-gradient(45deg, #a85e3e, #cb7a5b);
+    background: #a85e3e;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(203, 122, 91, 0.4);
 }
@@ -95,7 +97,7 @@ button:disabled {
     box-shadow: none;
 }
 
-.stats {
+.estadisticas {
     background: #e8e2d8;
     padding: 15px;
     border-radius: 8px;
@@ -103,64 +105,64 @@ button:disabled {
     text-align: center;
 }
 
-.stats-number {
+.numero-estadisticas {
     font-size: 2em;
     font-weight: bold;
     color: #5c757a;
     display: block;
 }
 
-.loading {
+.indicador-carga {
     text-align: center;
     padding: 20px;
     color: #cb7a5b;
 }
 
-.layer-control {
+.control-capa {
     background: #9da696;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 15px;
 }
 
-.layer-item {
+.elemento-capa {
     display: flex;
     align-items: center;
     margin: 8px 0;
 }
 
-.layer-item input[type="checkbox"] {
+.elemento-capa input[type="checkbox"] {
     width: auto;
     margin-right: 10px;
     transform: scale(1.2);
 }
 
-.layer-item label {
+.elemento-capa label {
     font-size: 13px;
     cursor: pointer;
     flex: 1;
     color: #232226;
 }
 
-.popup-content {
-    color: #232226; 
+.contenido-popup {
+    color: #232226;
     max-width: 300px;
 }
 
-.popup-title {
+.titulo-popup {
     font-weight: bold;
-    color: #5c757a; 
+    color: #5c757a;
     margin-bottom: 10px;
     font-size: 16px;
 }
 
-.popup-date {
+.fecha-popup {
     color: #747c64;
     font-size: 12px;
     margin-bottom: 8px;
 }
 
-.popup-status {
+.estado-popup {
     display: inline-block;
     padding: 3px 8px;
     border-radius: 12px;
@@ -169,12 +171,59 @@ button:disabled {
     margin-bottom: 8px;
 }
 
-.status-open {
+.estado-abierto {
     background: #cb7a5b;
     color: #e8e2d8;
 }
 
-.status-closed {
+.estado-cerrado {
     background: #747c64;
     color: #e8e2d8;
+}
+
+/* Estilos adicionales para nuevos elementos */
+.seccion-sismo {
+    margin-bottom: 20px;
+}
+
+.boton-sismo {
+    background: #cb7a5b;
+}
+
+.boton-sismo:hover {
+    background: #a85e3e;
+}
+
+.enlace-sismo-popup {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.enlace-sismo-popup a {
+    display: inline-block;
+    background: #5c757a;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.enlace-sismo-popup a:hover {
+    background: #3a4a4f;
+}
+
+.mensaje-error {
+    background: #ff6b6b;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.categoria-popup {
+    font-style: italic;
+    color: #747c64;
+    margin-bottom: 5px;
 }
